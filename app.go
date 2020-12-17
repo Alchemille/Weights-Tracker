@@ -49,7 +49,7 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	var newWeight Weight
+	newWeight := Weight{Date: time.Now()}
 
 	err = json.Unmarshal(bodyBytes, &newWeight)
 	if err != nil {
@@ -57,6 +57,10 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 		writer.Write([]byte(err.Error()))
 		return
 	}
+
+	//if newWeight.Date == {
+	//	newWeight.Date = time.Now()
+	//}
 
 	svc.db.Create(&newWeight)
 
