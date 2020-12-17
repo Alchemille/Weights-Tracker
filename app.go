@@ -16,31 +16,23 @@ type Weight struct {
 	Date  time.Time `json:"date"`
 }
 
-type SliceWeights struct {
-	weights []Weight
+type WeightService struct {
+	db *gorm.DB
 }
 
-func readWeightsDB(db *gorm.DB) *SliceWeights {
-
-	var weights []Weight
-	db.Find(&weights)
-	sliceWeights := &SliceWeights{weights: weights}
-	return sliceWeights
-}
-
-func (weights *SliceWeights) handleWeights(writer http.ResponseWriter, req *http.Request) {
+func (svc *WeightService) handleWeights(writer http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
-		weights.getWeights(writer, req)
+		svc.getWeights(writer, req)
 	case "POST":
-		weights.addWeight(writer, req)
+		svc.addWeight(writer, req)
 	default:
 		writer.WriteHeader(http.StatusMethodNotAllowed)
 		writer.Write([]byte("Method not allowed: only GET and POST"))
 	}
 }
 
-func (weights *SliceWeights) addWeight(writer http.ResponseWriter, req *http.Request) {
+func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Request) {
 
 	bodyBytes, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
@@ -58,6 +50,7 @@ func (weights *SliceWeights) addWeight(writer http.ResponseWriter, req *http.Req
 	}
 
 	var newWeight Weight
+
 	err = json.Unmarshal(bodyBytes, &newWeight)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
@@ -65,13 +58,17 @@ func (weights *SliceWeights) addWeight(writer http.ResponseWriter, req *http.Req
 		return
 	}
 
-	weights.weights = append(weights.weights, newWeight)
+	svc.db.Create(&newWeight)
 
+	writer.WriteHeader(http.StatusNoContent)
 }
 
-func (weights *SliceWeights) getWeights(writer http.ResponseWriter, req *http.Request) {
+func (svc *WeightService) getWeights(writer http.ResponseWriter, req *http.Request) {
 
-	jsonBytes, err := json.Marshal(weights.weights)
+	var weights []Weight
+	svc.db.Find(&weights)
+
+	jsonBytes, err := json.Marshal(weights)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
@@ -79,19 +76,18 @@ func (weights *SliceWeights) getWeights(writer http.ResponseWriter, req *http.Re
 	writer.Header().Add("content-type", "application/json")
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(jsonBytes)
-	//fmt.Fprintf(writer, "Hi there, I love %s!", req.URL.Path[1:])
 }
 
 // our initial migration function
 func AutoMigration(db *gorm.DB) {
 
-	db.AutoMigrate(&SliceWeights{})
+	db.AutoMigrate(&Weight{})
 }
 
 func handleRoutes(db *gorm.DB) {
 
-	currentWeights := readWeightsDB(db)
-	http.HandleFunc("/", currentWeights.handleWeights)
+	svc := WeightService{db}
+	http.HandleFunc("/weights", svc.handleWeights)
 
 }
 
