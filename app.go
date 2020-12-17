@@ -2,26 +2,30 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type Weight struct {
-	Value int `json:"value"`
-	Date string `json:"date"`
+	gorm.Model
+	Value int       `json:"value"`
+	Date  time.Time `json:"date"`
 }
 
 type SliceWeights struct {
 	weights []Weight
 }
 
-func newWeightsHandlers() *SliceWeights {
-	return &SliceWeights{
-		weights: []Weight{Weight{
-			Value: 62,
-			Date:  "Today",
-		}},
-	}
+func readWeightsDB(db *gorm.DB) *SliceWeights {
+
+	var weights []Weight
+	db.Find(&weights)
+	sliceWeights := &SliceWeights{weights: weights}
+	return sliceWeights
 }
 
 func (weights *SliceWeights) handleWeights(writer http.ResponseWriter, req *http.Request) {
@@ -78,14 +82,33 @@ func (weights *SliceWeights) getWeights(writer http.ResponseWriter, req *http.Re
 	//fmt.Fprintf(writer, "Hi there, I love %s!", req.URL.Path[1:])
 }
 
+// our initial migration function
+func AutoMigration(db *gorm.DB) {
+
+	db.AutoMigrate(&SliceWeights{})
+}
+
+func handleRoutes(db *gorm.DB) {
+
+	currentWeights := readWeightsDB(db)
+	http.HandleFunc("/", currentWeights.handleWeights)
+
+}
+
 func main() {
-
-	wHandlers := newWeightsHandlers()
-
-	http.HandleFunc("/", wHandlers.handleWeights)
-
-	err := http.ListenAndServe(":8080", nil)
+	dsn := "host=localhost dbname=weights"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic (err)
+		fmt.Println(err.Error())
+		panic("Failed to connect database")
 	}
+	AutoMigration(db)
+
+	handleRoutes(db)
+
+	err = http.ListenAndServe(":8080", nil)
+	if err != nil {
+		panic(err)
+	}
+
 }
