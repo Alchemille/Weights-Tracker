@@ -58,10 +58,6 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	//if newWeight.Date == {
-	//	newWeight.Date = time.Now()
-	//}
-
 	svc.db.Create(&newWeight)
 
 	writer.WriteHeader(http.StatusNoContent)
@@ -82,16 +78,22 @@ func (svc *WeightService) getWeights(writer http.ResponseWriter, req *http.Reque
 	writer.Write(jsonBytes)
 }
 
-// our initial migration function
 func AutoMigration(db *gorm.DB) {
 
 	db.AutoMigrate(&Weight{})
+}
+
+func defaultRouteHdl(writer http.ResponseWriter, req *http.Request) {
+	writer.WriteHeader(http.StatusBadRequest)
+	writer.Write([]byte("Did you mean to contact the /weights route?"))
+	return
 }
 
 func handleRoutes(db *gorm.DB) {
 
 	svc := WeightService{db}
 	http.HandleFunc("/weights", svc.handleWeights)
+	http.HandleFunc("/", defaultRouteHdl)
 
 }
 
