@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {CartesianGrid, Line, LineChart, XAxis, YAxis} from 'recharts';
 import './index.css';
-import axios from 'axios';
 import moment from 'moment'
 import API from './api';
 
@@ -10,6 +9,7 @@ import API from './api';
 
 class Graph extends React.Component {
     state = {data: []}
+
     componentDidMount() {
         API.get(`weights`)
             .then(res => {
@@ -28,10 +28,12 @@ class Graph extends React.Component {
             <div className="graph">
                 <div>
                     <LineChart width={400} height={400} data={this.state.data}>
-                        <Line type="monotone" dataKey="value" stroke="#8884d8" />
-                        <CartesianGrid stroke="#ccc" />
-                        <XAxis dataKey="date" type="number" tickFormatter={(unixTime) => moment.unix(unixTime).format('DD-MM-YY')} domain = {['auto', 'auto']}/>
-                        <YAxis />
+                        <Line type="monotone" dataKey="value" stroke="#8884d8"/>
+                        <CartesianGrid stroke="#ccc"/>
+                        <XAxis dataKey="date" type="number"
+                               tickFormatter={(unixTime) => moment.unix(unixTime).format('DD-MM-YY')}
+                               domain={['auto', 'auto']}/>
+                        <YAxis/>
                     </LineChart>
                 </div>
             </div>
@@ -42,6 +44,6 @@ class Graph extends React.Component {
 // ========================================
 
 ReactDOM.render(
-    <Graph />,
+    <Graph/>,
     document.getElementById('root')
 );
