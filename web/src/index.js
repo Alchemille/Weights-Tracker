@@ -5,8 +5,6 @@ import './index.css';
 import moment from 'moment'
 import API from './api';
 
-//const data = [{weight: 56, timestamp:0}, {weight: 63, timestamp:1}, {weight: 58, timestamp: 3}];
-
 class Graph extends React.Component {
     state = {data: []}
 
@@ -19,7 +17,6 @@ class Graph extends React.Component {
                 });
                 this.setState({data: weights});
                 console.log(weights);
-                console.log(moment("0001-01-01T00:34:08+00:34").format('DD-MM-YY'))
             })
     }
 
