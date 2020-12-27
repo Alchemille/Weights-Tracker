@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"io/ioutil"
@@ -90,11 +89,11 @@ func defaultRouteHdl(writer http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func handleRoutes(db *gorm.DB, mux *http.ServeMux) {
+func handleRoutes(db *gorm.DB) {
 
 	svc := WeightService{db}
-	mux.HandleFunc("/weights", svc.handleWeights)
-	mux.HandleFunc("/", defaultRouteHdl)
+	http.HandleFunc("/weights", svc.handleWeights)
+	http.HandleFunc("/", defaultRouteHdl)
 
 }
 
@@ -108,15 +107,9 @@ func main() {
 	}
 	AutoMigration(db)
 
-	// Define the HTTP request multiplexer
-	mux := http.NewServeMux()
-	handleRoutes(db, mux)
+	handleRoutes(db)
 
-	// cors.Default() setup the middleware with default options being
-	// all origins accepted with simple methods (GET, POST). See
-	// documentation below for more options.
-	handler := cors.Default().Handler(mux)
-	err = http.ListenAndServe(":8080", handler)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		panic(err)
 	}
