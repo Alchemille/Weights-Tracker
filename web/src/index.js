@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {CartesianGrid, Line, LineChart, XAxis, YAxis} from 'recharts';
+import {CartesianGrid, Line, LineChart, XAxis, YAxis, Tooltip, Legend} from 'recharts';
 import './index.css';
 import moment from 'moment'
 import API from './api';
@@ -24,13 +24,15 @@ class Graph extends React.Component {
         return (
             <div className="graph">
                 <div>
-                    <LineChart width={400} height={400} data={this.state.data}>
+                    <LineChart width={500} height={300} data={this.state.data}>
                         <Line type="monotone" dataKey="value" stroke="#8884d8"/>
-                        <CartesianGrid stroke="#ccc"/>
+                        <CartesianGrid strokeDasharray="3 3"/>
                         <XAxis dataKey="date" type="number"
                                tickFormatter={(unixTime) => moment.unix(unixTime).format('DD-MM-YY')}
                                domain={['auto', 'auto']}/>
                         <YAxis/>
+                        <Tooltip labelFormatter={(unixTime) => moment.unix(unixTime).format('DD-MM-YY')}/>
+                        <Legend />
                     </LineChart>
                 </div>
             </div>
