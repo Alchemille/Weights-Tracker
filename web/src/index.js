@@ -1,9 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {CartesianGrid, Line, LineChart, XAxis, YAxis, Tooltip, Legend} from 'recharts';
+import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis} from 'recharts';
 import './index.css';
 import moment from 'moment'
 import API from './api';
+import {Button, Col, Form} from "react-bootstrap";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 class Graph extends React.Component {
     state = {data: []}
@@ -32,7 +34,7 @@ class Graph extends React.Component {
                                domain={['auto', 'auto']}/>
                         <YAxis/>
                         <Tooltip labelFormatter={(unixTime) => moment.unix(unixTime).format('DD-MM-YY')}/>
-                        <Legend />
+                        <Legend/>
                     </LineChart>
                 </div>
             </div>
@@ -40,9 +42,58 @@ class Graph extends React.Component {
     }
 }
 
+class WeightForm extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {value: ''};
+    }
+
+    handleChange = (event) => {
+        this.setState({value: event.target.value});
+    }
+
+    handleSubmit = (event) => {
+        alert('A name was submitted: ' + this.state.value);
+        event.preventDefault();
+    }
+
+    render() {
+        return (
+            <>
+                <form onSubmit={this.handleSubmit}>
+                    <Form.Group>
+                        <Form.Row className="align-items-center">
+                            <Col xs="auto">
+                                <Form.Label column>Enter Weight Value</Form.Label>
+                            </Col>
+                            <Col xs="auto">
+                                <Form.Control type="number" value={this.state.value} onChange={this.handleChange} placeholder="Enter weight value"/>
+                            </Col>
+                            <Button variant="primary" type="submit">
+                                Submit
+                            </Button>
+                        </Form.Row>
+                    </Form.Group>
+                </form>
+            </>
+        );
+    }
+}
+
+class Page extends React.Component {
+    render() {
+        return (
+            <>
+                <Graph/>
+                <WeightForm/>
+            </>
+        )
+    }
+}
+
 // ========================================
 
 ReactDOM.render(
-    <Graph/>,
+    <Page/>,
     document.getElementById('root')
 );
