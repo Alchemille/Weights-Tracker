@@ -49,12 +49,19 @@ class WeightForm extends React.Component {
     }
 
     handleChange = (event) => {
-        this.setState({value: event.target.value});
+        this.setState({value: Number(event.target.value)});
     }
 
     handleSubmit = (event) => {
-        alert('A name was submitted: ' + this.state.value);
+        alert('A weight was submitted: ' + this.state.value);
         event.preventDefault();
+        API.post(`weights`, {value: this.state.value})
+            .then(function (response) {
+                console.log(response);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
     }
 
     render() {
