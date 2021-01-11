@@ -4,8 +4,11 @@ import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis} from 'rec
 import './index.css';
 import moment from 'moment'
 import API from './api';
-import {Button, Col, Form} from "react-bootstrap";
+import DatePicker from "react-datepicker";
+import {Button, Col, Form, FormControl, InputGroup} from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import "react-datepicker/dist/react-datepicker.css";
+import 'react-datepicker/dist/react-datepicker-cssmodules.css';
 
 class Graph extends React.Component {
     state = {data: []}
@@ -46,7 +49,7 @@ class Graph extends React.Component {
 class WeightForm extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {value: ''};
+        this.state = {value: '', date: new Date()};
     }
 
     handleChange = (event) => {
@@ -54,10 +57,9 @@ class WeightForm extends React.Component {
     }
 
     handleSubmit = (event) => {
-        alert('A weight was submitted: ' + this.state.value);
         event.preventDefault();
 
-        API.post(`weights`, {value: this.state.value, date: moment([2020, 6, 10]).toISOString()})
+        API.post(`weights`, {value: this.state.value, date: moment([this.state.date.getFullYear(), this.state.date.getMonth(), this.state.date.getDate()]).toISOString()})
             .then(function (response) {
                 console.log(response);
             })
@@ -73,10 +75,13 @@ class WeightForm extends React.Component {
                     <Form.Group>
                         <Form.Row className="align-items-center">
                             <Col xs="auto">
-                                <Form.Label column>Enter Weight Value</Form.Label>
+                                <DatePicker selected={this.state.date} onChange={date => this.setState({date: date})} />
                             </Col>
                             <Col xs="auto">
-                                <Form.Control type="number" value={this.state.value} onChange={this.handleChange} placeholder="Enter weight value"/>
+                                <InputGroup>
+                                    <Form.Control type="number" value={this.state.value} onChange={this.handleChange} placeholder="Enter weight value"/>
+
+                                </InputGroup>
                             </Col>
                             <Button variant="primary" type="submit">
                                 Submit
