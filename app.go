@@ -43,13 +43,6 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	contentType := req.Header.Get("content-type")
-	if contentType != "application/json" {
-		writer.WriteHeader(http.StatusBadGateway)
-		writer.Write([]byte("Wrong content type: Expect application/json"))
-		return
-	}
-
 	newWeight := Weight{Date: time.Now()}
 
 	err = json.Unmarshal(bodyBytes, &newWeight)
@@ -67,7 +60,7 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 func (svc *WeightService) getWeights(writer http.ResponseWriter, req *http.Request) {
 
 	var weights []Weight
-	svc.db.Find(&weights)
+	svc.db.Order("date").Find(&weights)
 
 	jsonBytes, err := json.Marshal(weights)
 	if err != nil {

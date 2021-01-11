@@ -13,7 +13,8 @@ class Graph extends React.Component {
     componentDidMount() {
         API.get(`weights`)
             .then(res => {
-
+                // weights are assumed to be fetched in order by date
+                // convert ISO time from json to UnixTime
                 const weights = res.data.map((w) => {
                     return {...w, date: moment(w.date).unix()};
                 });
@@ -55,7 +56,8 @@ class WeightForm extends React.Component {
     handleSubmit = (event) => {
         alert('A weight was submitted: ' + this.state.value);
         event.preventDefault();
-        API.post(`weights`, {value: this.state.value})
+
+        API.post(`weights`, {value: this.state.value, date: moment([2020, 6, 10]).toISOString()})
             .then(function (response) {
                 console.log(response);
             })
