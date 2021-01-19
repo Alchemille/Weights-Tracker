@@ -17,7 +17,6 @@ export class Graph extends React.Component {
                                domain={['auto', 'auto']}/>
                         <YAxis/>
                         <Tooltip labelFormatter={(unixTime) => moment.unix(unixTime).format('DD-MM-YY')}/>
-                        <Legend/>
                     </LineChart>
                 </div>
             </div>
