@@ -1,10 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/futurenda/google-auth-id-token-verifier"
 	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -19,11 +23,63 @@ func defaultRouteHdl(writer http.ResponseWriter, req *http.Request) {
 	return
 }
 
+func verifyIdToken(idToken string) (*googleAuthIDTokenVerifier.ClaimSet, error) {
+	v := googleAuthIDTokenVerifier.Verifier{}
+	aud := "437796282386-o9uc6s79r134b5dkb2544ttce02piq4s.apps.googleusercontent.com"
+	err := v.VerifyIDToken(idToken, []string{
+		aud,
+	})
+	if err != nil {
+		return nil, errors.New("Invalid token verified")
+	}
+	claimSet, err := googleAuthIDTokenVerifier.Decode(idToken)
+	if err != nil {
+		return nil, errors.New("Invalid token decoded")
+	}
+
+	return claimSet, nil
+}
+
+func verifyToken(writer http.ResponseWriter, req *http.Request) {
+
+	if req.Method == "POST" {
+		bodyBytes, err := ioutil.ReadAll(req.Body)
+		defer req.Body.Close()
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write([]byte(err.Error()))
+			return
+		}
+
+		mapToken := make(map[string]string)
+
+		err = json.Unmarshal(bodyBytes, &mapToken)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			writer.Write([]byte(err.Error()))
+			return
+		}
+
+		tokenInfo, err := verifyIdToken(mapToken["id_token"])
+
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			writer.Write([]byte(err.Error()))
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+		writer.Write([]byte("Bienvenue " + tokenInfo.Email))
+	} else {
+		writer.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func handleRoutes(db *gorm.DB, mux *http.ServeMux) {
 
 	svc := WeightService{db}
 	mux.HandleFunc("/weights", svc.handleWeights)
 	mux.HandleFunc("/", defaultRouteHdl)
+	mux.HandleFunc("/verify_token", verifyToken)
 
 }
 

@@ -8,6 +8,7 @@ import {Graph} from "./Graph";
 import {WeightForm} from "./WeightForm";
 import API from "./api";
 import moment from "moment";
+import Oidc from "./oidc";
 
 class Page extends React.Component {
     state = {weights:[]}
@@ -19,6 +20,7 @@ class Page extends React.Component {
     render() {
         return (
             <>
+                <Oidc/>
                 <Graph weights={this.state.weights}/>
                 <WeightForm onSubmit={this.handleSubmit}/>
             </>
