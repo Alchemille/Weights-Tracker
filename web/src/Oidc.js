@@ -11,10 +11,12 @@ window.onSignIn = function (googleUser) {
     const id_token = googleUser.getAuthResponse().id_token;
 
     API.defaults.headers["authorization"] = "bearer " + id_token;
+
+    window.onLogIn()
 }
 
-function Oidc() {
-
+function Oidc({onLogIn}) {
+    window.onLogIn = onLogIn;
     return (
         <div>
             <div className="g-signin2" data-onsuccess="onSignIn"/>
