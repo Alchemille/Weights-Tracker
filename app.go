@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/futurenda/google-auth-id-token-verifier"
 	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -40,47 +38,11 @@ func verifyIdToken(idToken string) (*googleAuthIDTokenVerifier.ClaimSet, error) 
 	return claimSet, nil
 }
 
-func verifyToken(writer http.ResponseWriter, req *http.Request) {
-
-	if req.Method == "POST" {
-		bodyBytes, err := ioutil.ReadAll(req.Body)
-		defer req.Body.Close()
-		if err != nil {
-			writer.WriteHeader(http.StatusInternalServerError)
-			writer.Write([]byte(err.Error()))
-			return
-		}
-
-		mapToken := make(map[string]string)
-
-		err = json.Unmarshal(bodyBytes, &mapToken)
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			writer.Write([]byte(err.Error()))
-			return
-		}
-
-		tokenInfo, err := verifyIdToken(mapToken["id_token"])
-
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			writer.Write([]byte(err.Error()))
-			return
-		}
-		writer.WriteHeader(http.StatusOK)
-		writer.Write([]byte("Bienvenue " + tokenInfo.Email))
-	} else {
-		writer.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
-
 func handleRoutes(db *gorm.DB, mux *http.ServeMux) {
 
 	svc := WeightService{db}
 	mux.HandleFunc("/weights", svc.handleWeights)
 	mux.HandleFunc("/", defaultRouteHdl)
-	mux.HandleFunc("/verify_token", verifyToken)
-
 }
 
 func main() {
@@ -100,7 +62,14 @@ func main() {
 	// cors.Default() setup the middleware with default options being
 	// all origins accepted with simple methods (GET, POST). See
 	// documentation below for more options.
-	handler := cors.Default().Handler(mux)
+	handler := cors.New(cors.Options{
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"*"},
+		Debug:            true,
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
+	}).Handler(mux)
 	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
 		panic(err)
