@@ -7,7 +7,24 @@ import DatePicker from "react-datepicker";
 export class WeightForm extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {value: '', date: new Date()};
+        this.state = {value: '', date: new Date(), errors:{}};
+    }
+
+    validateForm = () => {
+        let valid = true;
+        let errors = {};
+
+        if (!this.state.value || isNaN(this.state.value)) {
+            errors["value"] = "Please enter a number"
+            valid = false
+        }
+
+        if (this.state.date > new Date()) {
+            errors["date"] = "Future dates are not valid"
+            valid = false
+        }
+        this.setState({errors: errors});
+        return valid
     }
 
     handleChange = (event) => {
@@ -17,12 +34,15 @@ export class WeightForm extends React.Component {
     handleSubmit = (event) => {
         event.preventDefault();
 
+        if (!this.validateForm()) {
+            return
+        }
+
         API.post(`weights`, {
             value: this.state.value,
             date: moment([this.state.date.getFullYear(), this.state.date.getMonth(), this.state.date.getDate()]).toISOString()
         })
             .then((response) => {
-                console.log(response);
                 this.props.onSubmit();
             })
             .catch(error => {
@@ -38,14 +58,19 @@ export class WeightForm extends React.Component {
                         <Form.Row className="align-items-center">
                             <Col xs="auto">
                                 <DatePicker selected={this.state.date} onChange={date => this.setState({date: date})}/>
+                                <span style={{color: "red"}}>{this.state.errors["date"]}</span>
                             </Col>
                             <Col xs="auto">
                                 <InputGroup>
                                     <Form.Control type="number" value={this.state.value} onChange={this.handleChange}
                                                   placeholder="Enter weight value"/>
 
+
                                 </InputGroup>
                             </Col>
+                            <br/>
+                            <span className='mr-2' style={{color: "red"}}>{this.state.errors["value"]}</span>
+                            <br/>
                             <Button variant="primary" type="submit">
                                 Submit
                             </Button>
