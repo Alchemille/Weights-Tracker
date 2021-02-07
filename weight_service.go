@@ -1,13 +1,10 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -16,13 +13,6 @@ type WeightService struct {
 }
 
 func (svc *WeightService) handleWeights(writer http.ResponseWriter, req *http.Request) {
-
-	req, err := svc.verifyToken(req)
-	if err != nil {
-		writer.WriteHeader(http.StatusUnauthorized)
-		writer.Write([]byte(err.Error()))
-		return
-	}
 	switch req.Method {
 	case "GET":
 		svc.getWeights(writer, req)
@@ -74,33 +64,4 @@ func (svc *WeightService) getWeights(writer http.ResponseWriter, req *http.Reque
 	writer.Header().Add("content-type", "application/json")
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(jsonBytes)
-}
-
-func (svc *WeightService) verifyToken(req *http.Request) (*http.Request, error) {
-
-	authorization, ok := req.Header["Authorization"]
-	if !ok {
-		return req, errors.New("no authorization header")
-	}
-	token := strings.TrimPrefix(authorization[0], "bearer ")
-
-	tokenInfo, err := verifyIdToken(token)
-	if err != nil {
-		return req, err
-	}
-
-	var user User
-	result := svc.db.Where(&User{Email: tokenInfo.Email}).First(&user)
-
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		user = User{
-			Email: tokenInfo.Email,
-			Name:  tokenInfo.Name,
-		}
-		svc.db.Create(&user)
-	}
-
-	req = req.WithContext(context.WithValue(req.Context(), "user", user))
-
-	return req, nil
 }

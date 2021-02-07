@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"github.com/futurenda/google-auth-id-token-verifier"
 	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,23 +17,6 @@ func defaultRouteHdl(writer http.ResponseWriter, req *http.Request) {
 	writer.WriteHeader(http.StatusBadRequest)
 	writer.Write([]byte("Did you mean to contact the /weights route?"))
 	return
-}
-
-func verifyIdToken(idToken string) (*googleAuthIDTokenVerifier.ClaimSet, error) {
-	v := googleAuthIDTokenVerifier.Verifier{}
-	aud := "437796282386-o9uc6s79r134b5dkb2544ttce02piq4s.apps.googleusercontent.com"
-	err := v.VerifyIDToken(idToken, []string{
-		aud,
-	})
-	if err != nil {
-		return nil, errors.New("Invalid token verified")
-	}
-	claimSet, err := googleAuthIDTokenVerifier.Decode(idToken)
-	if err != nil {
-		return nil, errors.New("Invalid token decoded")
-	}
-
-	return claimSet, nil
 }
 
 func handleRoutes(db *gorm.DB, mux *http.ServeMux) {
@@ -69,7 +50,7 @@ func main() {
 		AllowOriginFunc: func(origin string) bool {
 			return true
 		},
-	}).Handler(mux)
+	}).Handler(WithAuth(db, mux))
 	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
 		panic(err)
