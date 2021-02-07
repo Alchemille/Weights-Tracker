@@ -16,6 +16,6 @@ type Weight struct {
 	gorm.Model
 	Value  int       `json:"value"`
 	Date   time.Time `json:"date"`
-	UserID int
-	User   User
+	UserID uint      `json:"userid"`
+	User   User      `json:"user"`
 }

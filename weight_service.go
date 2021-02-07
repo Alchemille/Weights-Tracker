@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
@@ -16,7 +17,7 @@ type WeightService struct {
 
 func (svc *WeightService) handleWeights(writer http.ResponseWriter, req *http.Request) {
 
-	err := svc.verifyToken(req)
+	req, err := svc.verifyToken(req)
 	if err != nil {
 		writer.WriteHeader(http.StatusUnauthorized)
 		writer.Write([]byte(err.Error()))
@@ -43,7 +44,8 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	newWeight := Weight{Date: time.Now()} // current date if none was provided in post request.
+	currentUser := req.Context().Value("user").(User)
+	newWeight := Weight{Date: time.Now(), UserID: currentUser.ID} // current date if none was provided in post request.
 	err = json.Unmarshal(bodyBytes, &newWeight)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
@@ -59,8 +61,10 @@ func (svc *WeightService) addWeight(writer http.ResponseWriter, req *http.Reques
 func (svc *WeightService) getWeights(writer http.ResponseWriter, req *http.Request) {
 
 	var weights []Weight
-	// API client expects ordered weights
-	svc.db.Order("date").Find(&weights)
+
+	// select weights based on the user contained in the context
+	currentUser := req.Context().Value("user").(User)
+	svc.db.Order("date").Where(&Weight{UserID: currentUser.ID}).Find(&weights) // API client expects ordered weights
 
 	jsonBytes, err := json.Marshal(weights)
 	if err != nil {
@@ -72,28 +76,31 @@ func (svc *WeightService) getWeights(writer http.ResponseWriter, req *http.Reque
 	writer.Write(jsonBytes)
 }
 
-func (svc *WeightService) verifyToken(req *http.Request) error {
+func (svc *WeightService) verifyToken(req *http.Request) (*http.Request, error) {
 
 	authorization, ok := req.Header["Authorization"]
 	if !ok {
-		return errors.New("no authorization header")
+		return req, errors.New("no authorization header")
 	}
 	token := strings.TrimPrefix(authorization[0], "bearer ")
 
 	tokenInfo, err := verifyIdToken(token)
 	if err != nil {
-		return err
+		return req, err
 	}
 
 	var user User
 	result := svc.db.Where(&User{Email: tokenInfo.Email}).First(&user)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		newUser := User{
+		user = User{
 			Email: tokenInfo.Email,
 			Name:  tokenInfo.Name,
 		}
-		svc.db.Create(&newUser)
+		svc.db.Create(&user)
 	}
-	return nil
+
+	req = req.WithContext(context.WithValue(req.Context(), "user", user))
+
+	return req, nil
 }
