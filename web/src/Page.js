@@ -3,6 +3,7 @@ import {Graph} from "./Graph";
 import {WeightForm} from "./WeightForm";
 import API from "./api";
 import moment from "moment";
+import Logout from "./Logout";
 
 export default class Page extends React.Component {
     state = {weights: []}
@@ -16,6 +17,7 @@ export default class Page extends React.Component {
             <>
                 <Graph weights={this.state.weights}/>
                 <WeightForm onSubmit={this.handleSubmit}/>
+                <Logout onLogOut={this.props.onLogOut}/>
             </>
         )
     }

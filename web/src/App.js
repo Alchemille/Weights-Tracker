@@ -1,5 +1,5 @@
 import React from "react";
-import Oidc from "./Oidc";
+import Login from "./Login";
 import Page from "./Page";
 
 export class App extends React.Component {
@@ -7,15 +7,17 @@ export class App extends React.Component {
 
     render() {
         if (this.state.isLoggedIn) {
-            return <Page/>
+            return <Page onLogOut={this.handleLogOut}/>
         }
         else {
-            return <Oidc onLogIn={this.handleLogIn}/>
+            return <Login onLogIn={this.handleLogIn}/>
         }
     }
 
     handleLogIn = () => {
         this.setState({isLoggedIn: true})
-        console.log(this.state.isLoggedIn)
+    }
+    handleLogOut = () => {
+        this.setState({isLoggedIn: false})
     }
 }
